@@ -32,8 +32,8 @@ cursor.execute("""
 
 count = 1
 for docid in cursor:
-    snorkel_cursor.execute("INSERT INTO context (id, type, stable_id) VALUES (nextval('seq'), 'document', %(stable_id)s)", {"stable_id": docid[0] + "::document:0:0"})
-    snorkel_cursor.execute("INSERT INTO document (id, name) VALUES (currval('seq'), %(docid)s)", {"count" : count, "docid": docid[0]})
+    snorkel_cursor.execute("INSERT INTO context (id, type, stable_id) VALUES (nextval('context_id_seq'), 'document', %(stable_id)s)", {"stable_id": docid[0] + "::document:0:0"})
+    snorkel_cursor.execute("INSERT INTO document (id, name) VALUES (currval('context_id_seq'), %(docid)s)", {"count" : count, "docid": docid[0]})
     snorkel_connection.commit()
     count += 1
 
@@ -79,12 +79,12 @@ for sent in cursor:
         doc_char_counts[sent[0]] = sentence_running_count
 
     # keep this running count as the sentence-level offset stable_id
-    snorkel_cursor.execute("INSERT INTO context (id, type, stable_id) VALUES (nextval('seq'), 'sentence', %(stable_id)s)", {"stable_id": sent[0] + "::sentence:%s:%s" % (sentence_start, doc_char_counts[sent[0]])})
+    snorkel_cursor.execute("INSERT INTO context (id, type, stable_id) VALUES (nextval('context_id_seq'), 'sentence', %(stable_id)s)", {"stable_id": sent[0] + "::sentence:%s:%s" % (sentence_start, doc_char_counts[sent[0]])})
 
     snorkel_connection.commit()
     snorkel_cursor.execute(" \
         INSERT INTO sentence (id, document_id, position, words, pos_tags, ner_tags, lemmas, dep_labels, dep_parents, char_offsets, text) VALUES \
-                (currval('seq'), \
+                (currval('context_id_seq'), \
                 %(document_id)s, \
                 %(position)s, \
                 %(words)s, \
