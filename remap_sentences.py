@@ -40,7 +40,7 @@ for docid in cursor:
 #IMPORT THE SENTENCES DUMP
 cursor.execute("""
             SELECT docid, sentid, words, poses, ners, lemmas, dep_paths, dep_parents
-            FROM %(my_app)s_sentences_%(my_product)s;
+            FROM %(my_app)s_sentences_%(my_product)s ORDER BY docid, sentid;
             """, {
                 "my_app": AsIs(config['app_name']),
                     "my_product": AsIs(config['product'].lower())
@@ -70,17 +70,16 @@ for sent in cursor:
         parsed_sent["char_offsets"][wordidx] = sentence_running_count
         sentence_running_count += len(parsed_sent["words"][wordidx]) + 1
 
-    sentence_start = doc_char_counts[sent[0]] if sent[0] in doc_char_counts else 0
     # This will probably be off by one...
     if sent[0] in doc_char_counts:
         sentence_start = doc_char_counts[sent[0]] + 1
-        doc_char_counts[sent[0]] += sentence_running_count - 1
+        doc_char_counts[sent[0]] += sentence_running_count
     else:
         sentence_start = 0
-        doc_char_counts[sent[0]] = sentence_running_count - 1
+        doc_char_counts[sent[0]] = sentence_running_count
 
     # keep this running count as the sentence-level offset stable_id
-    snorkel_cursor.execute("INSERT INTO context (id, type, stable_id) VALUES (nextval('seq'), 'sentence', %(stable_id)s)", {"stable_id": docid[0] + "::sentence:%s:%s" % (sentence_start, doc_char_counts[sent[0]])})
+    snorkel_cursor.execute("INSERT INTO context (id, type, stable_id) VALUES (nextval('seq'), 'sentence', %(stable_id)s)", {"stable_id": sent[0] + "::sentence:%s:%s" % (sentence_start, doc_char_counts[sent[0]])})
 
     snorkel_connection.commit()
     snorkel_cursor.execute(" \
